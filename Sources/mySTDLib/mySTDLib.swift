@@ -124,3 +124,7 @@ public enum WorldAsync {
       // Nothing so far
 }
 #endif
+// This triggers only if you are on a Pico (no OS) but forgot the Value trait
+#if !Value && !OOP && !Async
+    #warning("No traits imported! The library will be empty. Did you forget to enable 'Value', 'OOP', or 'Async'?")
+#endif

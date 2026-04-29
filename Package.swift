@@ -16,7 +16,7 @@ let package = Package(
         .trait(name: "Value"),
         .trait(name: "OOP"),
         .trait(name: "Async"),
-        .trait(name: "default", enabledTraits: ["Value"])
+        .trait(name: "default")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
