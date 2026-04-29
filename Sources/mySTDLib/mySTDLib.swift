@@ -90,6 +90,7 @@ public enum WorldValue {
                     }
                 }
             }
+            public init() {}
         }
         public protocol VMEntrypoint {
             associatedtype V: WorldValue.StandardVM.VM
