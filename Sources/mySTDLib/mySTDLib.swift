@@ -1,6 +1,7 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 // MARK: - Value Logic
+
 #if Value
 public enum WorldValue {
     public enum StandardVM {
@@ -13,6 +14,23 @@ public enum WorldValue {
             var products: [Int: Int] {get}
             mutating func run(_ program: [Int]) throws
         }
+        // A no-heap stack using a fixed-size buffer
+        public struct SafeStack {
+            private var storage: InlineArray<256, Int> = .init()
+            private var count = 0
+
+            public mutating func push(_ value: Int) {
+                // Safe: Checks bounds before adding
+                storage[count] = value
+                count += 1
+            }
+
+            public mutating func pop() -> Int {
+                count -= 1
+                return storage[count]
+            }
+        }
+
         // MARK: - HeapVM (register-style, heap-based)
         public struct HeapVM: VM {
             private var shared: [Int: Int] = [:]
@@ -58,7 +76,7 @@ public enum WorldValue {
             public var products: [Int: Int] = [:]
 
             public mutating func run(_ program: [Int]) throws {
-                var stack: [Int] = []
+                var stack: SafeStack = .init()
                 var pc: Int = 0
 
                 while pc < program.count {
@@ -67,23 +85,23 @@ public enum WorldValue {
                     switch opcode {
                         case 0: // PUSH value
                             let value = program[pc + 1]
-                            stack.append(value)
+                            stack.push(value)
                             pc += 2
                         case 1: // ADD (stack)
-                            let b = stack.popLast() ?? 0
-                            let a = stack.popLast() ?? 0
-                            stack.append(a + b)
+                            let b = stack.pop()
+                            let a = stack.pop()
+                            stack.push(a + b)
                             pc += 1
                         case 2: // PRINT (stack)
-                            let value = stack.popLast() ?? 0
+                            let value = stack.pop()
                             print("StackVM PRINT:", value)
                             pc += 1
                         case 3: // HALT
                             return
                         case 4: // Subtract
-                            let b = stack.popLast() ?? 0
-                            let a = stack.popLast() ?? 0
-                            stack.append(a - b)
+                            let b = stack.pop()
+                            let a = stack.pop()
+                            stack.push(a - b)
                             pc += 1
                         default:
                             throw UnknownOpcodeError(opcode: opcode, pc: pc)
