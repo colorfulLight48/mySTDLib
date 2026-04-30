@@ -15,21 +15,33 @@ public enum WorldValue {
             mutating func run(_ program: [Int]) throws
         }
         // A no-heap stack using a fixed-size buffer
+        // Add this at the very top of your library file
+        @available(macOS 26.0, *) 
         public struct SafeStack {
-            private var storage: InlineArray<256, Int> = .init()
+            // 1. You MUST provide a repeating value (0) to initialize the stack memory
+            // 2. Note: Order is InlineArray<Capacity, Element>
+            private var storage = InlineArray<256, Int>(repeating: 0)
             private var count = 0
 
+            public init() {} // Explicit init for your protocol
+
             public mutating func push(_ value: Int) {
-                // Safe: Checks bounds before adding
-                storage[count] = value
-                count += 1
+                // Safe check for your RP2350
+                if count < 256 {
+                    storage[count] = value
+                    count += 1
+                }
             }
 
             public mutating func pop() -> Int {
-                count -= 1
-                return storage[count]
+                if count > 0 {
+                    count -= 1
+                    return storage[count]
+                }
+                return 0 // Or throw your UnknownOpcodeError
             }
         }
+
 
         // MARK: - HeapVM (register-style, heap-based)
         public struct HeapVM: VM {
@@ -69,8 +81,7 @@ public enum WorldValue {
                 }
             }
         }
-        
-        // MARK: - StackVM (stack-based)
+        @available(macOS 26.0, *) 
         public struct StackVM: VM {
             private var shared: [Int: Int] = [:]
             public var products: [Int: Int] = [:]
