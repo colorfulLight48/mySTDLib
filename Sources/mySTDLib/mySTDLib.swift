@@ -4,6 +4,70 @@
 
 #if Value
 public enum WorldValue {
+    public enum CoreApp {
+        public protocol Runnable {
+            func run()
+        }
+        @resultBuilder
+        public enum IntListBuilder {
+            public static func buildBlock(_ components: Int...) -> [Int] {
+                return components
+            }
+        }
+
+        @available(macOS 26.0, *)
+        public struct StackVM: WorldValue.CoreApp.Runnable {
+            public let code: [Int]
+            public func run() {
+                var vm: WorldValue.StandardVM.StackVM = WorldValue.StandardVM.StackVM()
+                try? vm.run(self.code)
+            }
+            public init(@IntListBuilder _ code: () -> [Int]) {
+                self.code = code()
+            }
+        }
+        public struct HeapVM: WorldValue.CoreApp.Runnable {
+            public let code: [Int]
+            public func run() {
+                var vm: WorldValue.StandardVM.HeapVM = WorldValue.StandardVM.HeapVM()
+                try? vm.run(self.code)
+            }
+            public init(@IntListBuilder _ code: () -> [Int]) {
+                self.code = code()
+            }
+        }
+        public struct SwiftCode: WorldValue.CoreApp.Runnable {
+            public let code: () -> Void
+            public func run() {
+                self.code()
+            }
+            public init(code: @escaping () -> Void) {
+                self.code = code
+            }
+        }
+        @resultBuilder
+        public enum CoreAppBuilder {
+            public static func buildBlock(_ components: any WorldValue.CoreApp.Runnable...) -> [any WorldValue.CoreApp.Runnable] {
+                return components
+            }
+        }
+        public struct CoreApp: Runnable {
+            public let code: [any WorldValue.CoreApp.Runnable]
+            public func run() {
+                for part: any WorldValue.CoreApp.Runnable in code {
+                    part.run()
+                }
+            }
+            public init(@CoreAppBuilder _ code: () -> [any Runnable]) {
+                self.code = code()
+            }
+        }
+        public protocol CoreAppStarter {
+            var app: CoreApp {get}
+            init()
+        }
+        
+    }
     public enum StandardVM {
         
         struct UnknownOpcodeError: Error {
@@ -181,6 +245,11 @@ public extension WorldValue.StandardVM.VMEntrypoint {
         try? vmCopy.run(program)
     }
 }
+public extension WorldValue.CoreApp.CoreAppStarter {
+    static func main() {
+        self.init().app.run()
+    }
+    }
 #endif
 
 // MARK: - OOP Logic
