@@ -63,7 +63,7 @@ public enum WorldValue {
             }
         }
         public protocol CoreAppStarter {
-            var app: CoreApp {get}
+            var app: WorldValue.CoreApp.CoreApp {get}
             init()
         }
         
