@@ -4,6 +4,80 @@
 
 #if Value
 public enum WorldValue {
+    public enum EmbeddedApp {
+        @resultBuilder
+        public enum IntListBuilder {
+            public static func buildBlock(_ components: Int...) -> [Int] {
+                return components
+            }
+        }
+        public protocol Runnable {
+            func run()
+        }
+        @available(macOS 26.0, *)
+        public struct EmbeddedStackVM<let count: Int>: WorldValue.EmbeddedApp.Runnable {
+            public let program: InlineArray<count, Int>
+            public init(@IntListBuilder _ code: () -> InlineArray<count, Int>) {
+                self.program = code()
+            }
+            public func run() {
+                var vm: WorldValue.StandardVM.EmbeddedStackVM = WorldValue.StandardVM.EmbeddedStackVM()
+                try? vm.run(self.program)
+            }
+        }
+        @resultBuilder
+        enum BothBuilder {
+            static func buildBlock<A, B>(_ a: A, _ b: B) -> Both<A, B> {
+                Both(a, b)
+            }
+        }
+
+        public struct Both<A: WorldValue.EmbeddedApp.Runnable, B: WorldValue.EmbeddedApp.Runnable>: WorldValue.EmbeddedApp.Runnable {
+            public let a: A
+            public let b: B
+            public init(_ a: A, _ b: B) {
+                self.a = a
+                self.b = b
+            }
+            public init(@BothBuilder _ closure: () -> Both) {
+                self = closure()
+            }
+            public func run() {
+                self.a.run()
+                self.b.run()
+            }
+        }
+        public struct EmbeddedSwiftCode: WorldValue.EmbeddedApp.Runnable {
+            public let fn: @convention(c) () -> Void
+
+            public init(_ fn: @convention(c) () -> Void) {
+                self.fn = fn
+            }
+
+            public func run() {
+                fn()
+            }
+        }
+        @resultBuilder
+        public enum EmbeddedAppBuilder {
+            public static func buildBlock<T: WorldValue.EmbeddedApp.Runnable>(_ component: T) -> WorldValue.EmbeddedApp.EmbeddedApp<T> {
+                return WorldValue.EmbeddedApp.EmbeddedApp(component)
+            }
+        }
+        public struct EmbeddedApp<Function: WorldValue.EmbeddedApp.Runnable>: WorldValue.EmbeddedApp.Runnable {
+            public let code: Function
+            public init(_ code: Function) {
+                self.code = code
+            }
+            public init(@EmbeddedAppBuilder _ code: () -> WorldValue.EmbeddedApp.EmbeddedApp<Function>) {
+                self = code()
+            }
+            public func run() {
+                self.code.run()
+            }
+        }
+
+    }
     public enum CoreApp {
         public protocol Runnable {
             func run()
@@ -148,8 +222,7 @@ public enum WorldValue {
         }
         @available(macOS 26.0, *) 
         public struct EmbeddedStackVM {
-            private var shared: [Int: Int] = [:]
-            public var products: [Int: Int] = [:]
+        
 
             public mutating func run<let Count: Int>(_ program: InlineArray<Count, Int>) throws {
                 var stack: SafeStack = .init()
