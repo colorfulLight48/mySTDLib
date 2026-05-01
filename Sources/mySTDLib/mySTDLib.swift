@@ -5,12 +5,45 @@
 #if Value
 public enum WorldValue {
     public enum EmbeddedApp {
-        @resultBuilder
-        public enum IntListBuilder {
-            public static func buildBlock(_ components: Int...) -> [Int] {
-                return components
+        @available(macOS 26.0, *)
+        public struct IntListSink<let Count: Int> {
+            public var index = 0
+            public var buffer = InlineArray<Count, Int>(repeating: 0)
+
+            public mutating func push(_ value: Int) {
+                precondition(index < Count, "Too many integers in VM program")
+                buffer[index] = value
+                index += 1
             }
         }
+        @resultBuilder
+        @available(macOS 26.0, *)
+        public enum IntListBuilder {
+            public static func buildBlock<let Count: Int>(_ components: (inout IntListSink<Count>) -> Void)
+                -> InlineArray<Count, Int>
+            {
+                var sink = IntListSink<Count>()
+                components(&sink)
+                precondition(sink.index == Count, "Expected exactly \(Count) integers")
+                return sink.buffer
+            }
+
+            public static func buildExpression<let Count: Int>(_ value: Int)
+                -> (inout IntListSink<Count>) -> Void
+            {
+                return { sink in sink.push(value) }
+            }
+
+            public static func buildBlock<let Count: Int>(_ parts: (inout IntListSink<Count>) -> Void...)
+                -> (inout IntListSink<Count>) -> Void
+            {
+                return { sink in
+                    for part in parts { part(&sink) }
+                }
+            }
+        }
+
+
         public protocol Runnable {
             func run()
         }
