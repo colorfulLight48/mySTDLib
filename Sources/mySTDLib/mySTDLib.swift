@@ -80,6 +80,7 @@ public enum WorldValue {
                     }
                 }
             }
+            public init() {}
         }
         @available(macOS 26.0, *) 
         public struct StackVM: VM {
