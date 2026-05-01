@@ -76,6 +76,11 @@ public enum WorldValue {
                 self.code.run()
             }
         }
+        public protocol EmbeddedAppLauncher {
+            associatedtype T: WorldValue.EmbeddedApp.Runnable
+            var app: WorldValue.EmbeddedApp.EmbeddedApp<T> {get}
+            init()
+        }
 
     }
     public enum CoreApp {
@@ -322,7 +327,12 @@ public extension WorldValue.CoreApp.CoreAppStarter {
     static func main() {
         self.init().app.run()
     }
+}
+public extension WorldValue.EmbeddedApp.EmbeddedAppLauncher {
+    static func main() {
+        self.init().app.run()
     }
+}
 #endif
 
 // MARK: - OOP Logic
