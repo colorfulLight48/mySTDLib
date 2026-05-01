@@ -26,8 +26,8 @@ public enum WorldValue {
             }
         }
         @resultBuilder
-        enum BothBuilder {
-            static func buildBlock<A, B>(_ a: A, _ b: B) -> Both<A, B> {
+        public enum BothBuilder {
+            public static func buildBlock<A, B>(_ a: A, _ b: B) -> Both<A, B> {
                 Both(a, b)
             }
         }
