@@ -83,6 +83,47 @@ public enum WorldValue {
             public init() {}
         }
         @available(macOS 26.0, *) 
+        public struct EmbeddedStackVM {
+            private var shared: [Int: Int] = [:]
+            public var products: [Int: Int] = [:]
+
+            public mutating func run<let Count: Int>(_ program: InlineArray<Count, Int>) throws {
+                var stack: SafeStack = .init()
+                var pc: Int = 0
+
+                while pc < program.count {
+                    let opcode = program[pc]
+
+                    switch opcode {
+                        case 0: // PUSH value
+                            let value = program[pc + 1]
+                            stack.push(value)
+                            pc += 2
+                        case 1: // ADD (stack)
+                            let b = stack.pop()
+                            let a = stack.pop()
+                            stack.push(a + b)
+                            pc += 1
+                        case 2: // PRINT (stack)
+                            let value = stack.pop()
+                            print("StackVM PRINT:", value)
+                            pc += 1
+                        case 3: // HALT
+                            return
+                        case 4: // Subtract
+                            let b = stack.pop()
+                            let a = stack.pop()
+                            stack.push(a - b)
+                            pc += 1
+                        default:
+                            throw UnknownOpcodeError(opcode: opcode, pc: pc)
+                    }
+                }
+            }
+            public init() {}
+        }
+
+        @available(macOS 26.0, *) 
         public struct StackVM: VM {
             private var shared: [Int: Int] = [:]
             public var products: [Int: Int] = [:]
