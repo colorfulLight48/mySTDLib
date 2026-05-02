@@ -32,6 +32,9 @@ public enum WorldValue {
             public init(@IntListBuilder<count> _ code: () -> InlineArray<count, Int>) {
                 self.program = code()
             }
+            public init(_ program: InlineArray<count, Int>) {
+                self.program = program
+            }
             public func run() {
                 var vm: WorldValue.StandardVM.EmbeddedStackVM = WorldValue.StandardVM.EmbeddedStackVM()
                 try? vm.run(self.program)
