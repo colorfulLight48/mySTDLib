@@ -18,29 +18,8 @@ public enum WorldValue {
         }
         @resultBuilder
         @available(macOS 26.0, *)
-        public enum IntListBuilder {
-            public static func buildBlock<let Count: Int>(_ components: (inout IntListSink<Count>) -> Void)
-                -> InlineArray<Count, Int>
-            {
-                var sink = IntListSink<Count>()
-                components(&sink)
-                precondition(sink.index == Count, "Expected exactly \(Count) integers")
-                return sink.buffer
-            }
-
-            public static func buildExpression<let Count: Int>(_ value: Int)
-                -> (inout IntListSink<Count>) -> Void
-            {
-                return { (sink: inout IntListSink<Count>) in sink.push(value) }
-            }
-
-            public static func buildBlock<let Count: Int>(_ parts: (inout IntListSink<Count>) -> Void...)
-                -> (inout IntListSink<Count>) -> Void
-            {
-                return { sink in
-                    for part in parts { part(&sink) }
-                }
-            }
+        public enum IntListBuilder<let Count: Int> {
+            public static func buildBlock(_ component: InlineArray<Count, Int>) -> InlineArray<Count, Int> { component }
         }
 
 
@@ -50,7 +29,7 @@ public enum WorldValue {
         @available(macOS 26.0, *)
         public struct EmbeddedStackVM<let count: Int>: WorldValue.EmbeddedApp.Runnable {
             public let program: InlineArray<count, Int>
-            public init(@IntListBuilder _ code: () -> InlineArray<count, Int>) {
+            public init(@IntListBuilder<count> _ code: () -> InlineArray<count, Int>) {
                 self.program = code()
             }
             public func run() {
