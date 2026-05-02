@@ -31,7 +31,7 @@ public enum WorldValue {
             public static func buildExpression<let Count: Int>(_ value: Int)
                 -> (inout IntListSink<Count>) -> Void
             {
-                return { sink in sink.push(value) }
+                return { (sink: inout IntListSink<Count>) in sink.push(value) }
             }
 
             public static func buildBlock<let Count: Int>(_ parts: (inout IntListSink<Count>) -> Void...)
